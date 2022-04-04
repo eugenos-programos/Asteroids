@@ -55,8 +55,8 @@ def game_loop(startingState):
     stage = 3
     score = 0
     live = 2
-    oneUp_multiplier = 1
-    playOneUpSFX = 0
+    one_up_multiplier = 1
+    play_one_up_sfx = 0
     intensity = 0
     player = Player(display_width / 2, display_height / 2)
     saucer = Saucer()
@@ -193,7 +193,7 @@ def game_loop(startingState):
         # Saucer
         if saucer.state == "Dead":
             if random.randint(0, 6000) <= (intensity * 2) / (stage * 9) and next_level_delay == 0:
-                saucer.createSaucer()
+                saucer.create_saucer()
                 # Only small saucers >40000
                 if score >= 40000:
                     saucer.type = "Small"
@@ -270,7 +270,7 @@ def game_loop(startingState):
             # Saucer's bullets
             for b in saucer.bullets:
                 # Update bullets
-                b.updateBullet()
+                b.update_bullet()
 
                 # Check for collision w/ asteroids
                 for a in asteroids:
@@ -365,13 +365,13 @@ def game_loop(startingState):
                     continue
 
         # Extra live
-        if score > oneUp_multiplier * 10000:
-            oneUp_multiplier += 1
+        if score > one_up_multiplier * 10000:
+            one_up_multiplier += 1
             live += 1
-            playOneUpSFX = 60
+            play_one_up_sfx = 60
         # Play sfx
-        if playOneUpSFX > 0:
-            playOneUpSFX -= 1
+        if play_one_up_sfx > 0:
+            play_one_up_sfx -= 1
             pygame.mixer.Sound.play(snd_extra, 60)
 
         # Draw player

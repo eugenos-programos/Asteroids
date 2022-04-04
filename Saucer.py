@@ -6,11 +6,13 @@ from Bullet import Bullet
 
 class Saucer:
     def __init__(self):
+        self.directory = None
+        self.size = None
         self.x = 0
         self.y = 0
         self.state = "Dead"
         self.type = "Large"
-        self.dirchoice = ()
+        self.directory_choice = ()
         self.bullets = []
         self.cd = 0
         self.bdir = 0
@@ -18,12 +20,12 @@ class Saucer:
 
     def update_saucer(self):
         # Move player
-        self.x += saucer_speed * math.cos(self.dir * math.pi / 180)
-        self.y += saucer_speed * math.sin(self.dir * math.pi / 180)
+        self.x += saucer_speed * math.cos(self.directory * math.pi / 180)
+        self.y += saucer_speed * math.sin(self.directory * math.pi / 180)
 
         # Choose random direction
         if random.randrange(0, 100) == 1:
-            self.dir = random.choice(self.dirchoice)
+            self.directory = random.choice(self.directory_choice)
 
         # Wrapping
         if self.y < 0:
@@ -67,11 +69,11 @@ class Saucer:
 
         # Create random direction
         if self.x == 0:
-            self.dir = 0
-            self.dirchoice = (0, 45, -45)
+            self.directory = 0
+            self.directory_choice = (0, 45, -45)
         else:
-            self.dir = 180
-            self.dirchoice = (180, 135, -135)
+            self.directory = 180
+            self.directory_choice = (180, 135, -135)
 
         # Reset bullet cooldown
         self.cd = 0
