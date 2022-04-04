@@ -1,4 +1,9 @@
-# Create class saucer
+from GameDisplay import *
+import math
+import random
+from Bullet import Bullet
+
+
 class Saucer:
     def __init__(self):
         self.x = 0
@@ -71,7 +76,7 @@ class Saucer:
         # Reset bullet cooldown
         self.cd = 0
 
-    def drawSaucer(self):
+    def draw_saucer(self):
         # Draw saucer
         pygame.draw.polygon(gameDisplay, white,
                             ((self.x + self.size, self.y),

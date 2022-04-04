@@ -1,6 +1,8 @@
 import math
 import random
+from GameDisplay import *
 from Bullet import Bullet
+
 
 class Asteroid:
     def __init__(self, x, y, t):
@@ -27,7 +29,7 @@ class Asteroid:
             dist = random.uniform(self.size / 2, self.size)
             full_circle += random.uniform(18, 36)
 
-    def updateAsteroid(self):
+    def update_asteroid(self):
         # Move asteroid
         self.x += self.speed * math.cos(self.dir)
         self.y += self.speed * math.sin(self.dir)

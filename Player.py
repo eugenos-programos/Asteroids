@@ -1,11 +1,11 @@
 import math
 from GameDisplay import *
 
+
 class Player:
     fd_fric = 0.5
     bd_fric = 0.1
     player_max_speed = 20
-
 
     def __init__(self, x, y):
         self.x = x
@@ -16,7 +16,7 @@ class Player:
         self.rtspd = 0
         self.thrust = False
 
-    def updatePlayer(self):
+    def update_player(self):
         # Move player
         speed = math.sqrt(self.hspeed ** 2 + self.vspeed ** 2)
         if self.thrust:
@@ -93,7 +93,7 @@ class Player:
                              (x - (s * math.sqrt(5) / 4) * math.cos(-a + math.pi / 6),
                               y + (s * math.sqrt(5) / 4) * math.sin(-a + math.pi / 6)))
 
-    def killPlayer(self):
+    def kill_player(self):
         # Reset the player
         self.x = display_width / 2
         self.y = display_height / 2
