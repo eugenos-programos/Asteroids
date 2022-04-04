@@ -59,7 +59,7 @@ class Player:
         # Rotate player
         self.dir += self.rtspd
 
-    def drawPlayer(self):
+    def draw_player(self):
         a = math.radians(self.dir)
         x = self.x
         y = self.y

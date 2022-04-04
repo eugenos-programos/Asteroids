@@ -16,7 +16,7 @@ class Saucer:
         self.bdir = 0
         self.soundDelay = 0
 
-    def updateSaucer(self):
+    def update_saucer(self):
         # Move player
         self.x += saucer_speed * math.cos(self.dir * math.pi / 180)
         self.y += saucer_speed * math.sin(self.dir * math.pi / 180)
@@ -48,7 +48,7 @@ class Saucer:
         else:
             pygame.mixer.Sound.play(snd_saucerS)
 
-    def createSaucer(self):
+    def create_saucer(self):
         # Create saucer
         # Set state
         self.state = "Alive"
