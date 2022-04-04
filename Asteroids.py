@@ -1,16 +1,10 @@
-# Import modules
-import pygame
 import math
 import random
-pygame.init()
+from Bullet import Bullet
 
-# Initialize constants
 white = (255, 255, 255)
 red = (255, 0, 0)
 black = (0, 0, 0)
-
-display_width = 800
-display_height = 600
 
 player_size = 10
 fd_fric = 0.5
@@ -21,37 +15,7 @@ bullet_speed = 15
 saucer_speed = 5
 small_saucer_accuracy = 10
 
-# Make surface and display
-gameDisplay = pygame.display.set_mode((display_width, display_height))
-pygame.display.set_caption("Asteroids")
-timer = pygame.time.Clock()
 
-# Import sound effects
-snd_fire = pygame.mixer.Sound("Sounds/fire.wav")
-snd_bangL = pygame.mixer.Sound("Sounds/bangLarge.wav")
-snd_bangM = pygame.mixer.Sound("Sounds/bangMedium.wav")
-snd_bangS = pygame.mixer.Sound("Sounds/bangSmall.wav")
-snd_extra = pygame.mixer.Sound("Sounds/extra.wav")
-snd_saucerB = pygame.mixer.Sound("Sounds/saucerBig.wav")
-snd_saucerS = pygame.mixer.Sound("Sounds/saucerSmall.wav")
-
-
-# Create function to draw texts
-def drawText(msg, color, x, y, s, center=True):
-    screen_text = pygame.font.SysFont("Calibri", s).render(msg, True, color)
-    if center:
-        rect = screen_text.get_rect()
-        rect.center = (x, y)
-    else:
-        rect = (x, y)
-    gameDisplay.blit(screen_text, rect)
-
-
-# Create funtion to chek for collision
-def isColliding(x, y, xTo, yTo, size):
-    if x > xTo - size and x < xTo + size and y > yTo - size and y < yTo + size:
-        return True
-    return False
 
 
 # Create class asteroid
@@ -106,126 +70,6 @@ class Asteroid:
                                                   self.y + this_v[0] * math.sin(this_v[1] * math.pi / 180)),
                              (self.x + next_v[0] * math.cos(next_v[1] * math.pi / 180),
                               self.y + next_v[0] * math.sin(next_v[1] * math.pi / 180)))
-
-
-# Create class bullet
-class Bullet:
-    def __init__(self, x, y, direction):
-        self.x = x
-        self.y = y
-        self.dir = direction
-        self.life = 30
-
-    def updateBullet(self):
-        # Moving
-        self.x += bullet_speed * math.cos(self.dir * math.pi / 180)
-        self.y += bullet_speed * math.sin(self.dir * math.pi / 180)
-
-        # Drawing
-        pygame.draw.circle(gameDisplay, white, (int(self.x), int(self.y)), 3)
-
-        # Wrapping
-        if self.x > display_width:
-            self.x = 0
-        elif self.x < 0:
-            self.x = display_width
-        elif self.y > display_height:
-            self.y = 0
-        elif self.y < 0:
-            self.y = display_height
-        self.life -= 1
-
-
-# Create class saucer
-class Saucer:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.state = "Dead"
-        self.type = "Large"
-        self.dirchoice = ()
-        self.bullets = []
-        self.cd = 0
-        self.bdir = 0
-        self.soundDelay = 0
-
-    def updateSaucer(self):
-        # Move player
-        self.x += saucer_speed * math.cos(self.dir * math.pi / 180)
-        self.y += saucer_speed * math.sin(self.dir * math.pi / 180)
-
-        # Choose random direction
-        if random.randrange(0, 100) == 1:
-            self.dir = random.choice(self.dirchoice)
-
-        # Wrapping
-        if self.y < 0:
-            self.y = display_height
-        elif self.y > display_height:
-            self.y = 0
-        if self.x < 0 or self.x > display_width:
-            self.state = "Dead"
-
-        # Shooting
-        if self.type == "Large":
-            self.bdir = random.randint(0, 360)
-        if self.cd == 0:
-            self.bullets.append(Bullet(self.x, self.y, self.bdir))
-            self.cd = 30
-        else:
-            self.cd -= 1
-
-        # Play SFX
-        if self.type == "Large":
-            pygame.mixer.Sound.play(snd_saucerB)
-        else:
-            pygame.mixer.Sound.play(snd_saucerS)
-
-    def createSaucer(self):
-        # Create saucer
-        # Set state
-        self.state = "Alive"
-
-        # Set random position
-        self.x = random.choice((0, display_width))
-        self.y = random.randint(0, display_height)
-
-        # Set random type
-        if random.randint(0, 1) == 0:
-            self.type = "Large"
-            self.size = 20
-        else:
-            self.type = "Small"
-            self.size = 10
-
-        # Create random direction
-        if self.x == 0:
-            self.dir = 0
-            self.dirchoice = (0, 45, -45)
-        else:
-            self.dir = 180
-            self.dirchoice = (180, 135, -135)
-
-        # Reset bullet cooldown
-        self.cd = 0
-
-    def drawSaucer(self):
-        # Draw saucer
-        pygame.draw.polygon(gameDisplay, white,
-                            ((self.x + self.size, self.y),
-                             (self.x + self.size / 2, self.y + self.size / 3),
-                             (self.x - self.size / 2, self.y + self.size / 3),
-                             (self.x - self.size, self.y),
-                             (self.x - self.size / 2, self.y - self.size / 3),
-                             (self.x + self.size / 2, self.y - self.size / 3)), 1)
-        pygame.draw.line(gameDisplay, white,
-                         (self.x - self.size, self.y),
-                         (self.x + self.size, self.y))
-        pygame.draw.polygon(gameDisplay, white,
-                            ((self.x - self.size / 2, self.y - self.size / 3),
-                             (self.x - self.size / 3, self.y - 2 * self.size / 3),
-                             (self.x + self.size / 3, self.y - 2 * self.size / 3),
-                             (self.x + self.size / 2, self.y - self.size / 3)), 1)
 
 
 # Create class for shattered ship
