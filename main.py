@@ -1,5 +1,8 @@
 import math
 import sys
+
+import pygame.event
+
 from GameCharacteristics import *
 import random
 from DeadPlayer import DeadPlayer
@@ -53,6 +56,28 @@ class GameProcess:
             is_colliding_var = True
         return is_colliding_var
 
+    def help(self):
+        gameDisplay.fill(black)
+        while self.game_state == "Help":
+            x = display_width / 2
+            y = display_height / 8
+            GameProcess.draw_text("Help feedback", green, x, y, 100, font='cambria')
+            GameProcess.draw_text("The goal of the game was to get as many points as possible by shooting asteroids and flying saucers and avoiding the debris.", white, x, y + 100, 20)
+            GameProcess.draw_text("The player controls the intended spaceship, which can rotate left and right, but only also move and shoot, but forward.", white, x, y + 250, 20)
+            GameProcess.draw_text("Each level begins with the discovery of several asteroids drifting at random points on the screen.", white, x, y + 400, 20)
+            GameProcess.draw_text("The last screen is wrapped towards each other, When the player hits an asteroid, it breaks into pieces that are smaller but move faster.", white, x, y + 550, 20)
+            GameProcess.draw_text("Periodically bright flying saucer; the large cymbal simply moves from one edge of the screen to the other, the smaller cymbals are aimed at the player.", white, x, y + 700, 20)
+            GameProcess.draw_text("You can shoot by passing SPACE key and move to the random space point passing SHIFT key!", white, x, y + 850, 20)
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.game_state = "Menu"
+            timer.tick(5)
+
     def display_menu(self):
         while self.game_state == "Menu":
             gameDisplay.fill(black)
@@ -60,8 +85,8 @@ class GameProcess:
             y = display_height / 4
             GameProcess.draw_text("ASTEROIDS", yellow, x, y, 100, font='cambria')
             GameProcess.draw_text("Press SPACE to START", white, x, y + 150, 50)
-            GameProcess.draw_text("Press SHIFT to see records", white, x, y + 250, 50)
-            GameProcess.draw_text("Press TAB to see game rules", white, x, y + 350, 50)
+            GameProcess.draw_text("Press F9 to see records", white, x, y + 250, 50)
+            GameProcess.draw_text("Press CAPS to see game rules", white, x, y + 350, 50)
             GameProcess.draw_text("Press ESC to EXIT", white, x, y + 450, 50)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -72,12 +97,115 @@ class GameProcess:
                         self.game_state = "Exit"
                     if event.key == pygame.K_SPACE:
                         self.game_state = "Playing"
-                    if event.key == pygame.KMOD_SHIFT:
+                    if event.key == pygame.K_F9:
                         self.game_state = "Records"
-                    if event.key == pygame.K_TAB:
+                        self.records()
+                    if event.key == pygame.K_CAPSLOCK:
                         self.game_state = "Help"
+                        self.help()
             pygame.display.update()
             timer.tick(5)
+
+    def records(self):
+        gameDisplay.fill(black)
+        while self.game_state == "Records":
+            x = display_width / 2
+            y = display_height / 4
+            records = read_records()
+            records_dict = dict(sorted(records.items(), key=lambda item: item[1]))
+            GameProcess.draw_text("Game Records", green, x, y, 100)
+            GameProcess.draw_text("Name                 Score", yellow, x, y + 100, 50)
+            index = 1
+            for name in reversed(records_dict.keys()):
+                GameProcess.draw_text("{}. {}                   {}".format(index, name, records_dict[name]), white, x, y + 100 + 100 * index, 50)
+                index += 1
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.game_state = "Menu"
+            timer.tick(5)
+
+    def record_box(self):
+        font = pygame.font.Font(None, 32)
+        clock = pygame.time.Clock()
+        x = display_width / 2
+        y = display_height / 2
+        input_box = pygame.Rect(x - 50, y - 30, 140, 32)
+        color_inactive = pygame.Color('lightskyblue3')
+        color_active = pygame.Color('dodgerblue2')
+        color = color_inactive
+        active = False
+        text = ''
+        done = False
+        pygame.display.update()
+
+        while not done:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # If the user clicked on the input_box rect.
+                    if input_box.collidepoint(event.pos):
+                        # Toggle the active variable.
+                        active = not active
+                    else:
+                        active = False
+                    # Change the current color of the input box.
+                    color = color_active if active else color_inactive
+                if event.type == pygame.KEYDOWN:
+                    if active:
+                        if event.key == pygame.K_RETURN:
+                            self.name = text
+                            gameDisplay.fill(black)
+                            self.change_records()
+                        elif event.key == pygame.K_BACKSPACE:
+                            text = text[:-1]
+                        else:
+                            text += event.unicode
+            gameDisplay.fill((30, 30, 30))
+            GameProcess.draw_text("Congrats! Yoy gain top-3 score! Enter you name!", green, x, y - 80, 50)
+            # Render the current text.
+            txt_surface = font.render(text, True, color)
+            # Resize the box if the text is too long.
+            width = max(200, txt_surface.get_width()+10)
+            input_box.w = width
+            # Blit the text.
+            gameDisplay.blit(txt_surface, (input_box.x+5, input_box.y+5))
+            # Blit the input_box rect.
+            pygame.draw.rect(gameDisplay, color, input_box, 2)
+            pygame.display.flip()
+            clock.tick(30)
+
+    def check_record(self):
+        records = read_records()
+        is_record = False
+        for name, record in list(records.items()):
+            if record < self.score:
+                is_record = True
+                gameDisplay.fill(black)
+                x = display_width / 2
+                y = display_height / 4
+                GameProcess.draw_text("Congrats! Yoy gain top-3 score! Enter you name!", green, x, y, 60)
+                self.record_box()
+
+    def change_records(self):
+        records = read_records()
+        records[self.name] = self.score
+        minimal_key = ""
+        minimal_record = 100000
+        for name, record in list(records.items()):
+            if record < minimal_record:
+                minimal_record = record
+                minimal_key = name
+        del records[minimal_key]
+        save_records(records)
+        pygame.quit()
+        sys.exit()
 
     def game_loop(self, display_state="Menu"):
         self.__init__(display_state)
@@ -87,7 +215,7 @@ class GameProcess:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_state = "Exit"
-                if event.type == pygame.KEYDOWN:
+                if self.game_state == "Playing" and event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
                         self.player.thrust = True
                     if event.key == pygame.K_LEFT:
@@ -421,25 +549,22 @@ class GameProcess:
                 else:
                     self.player.draw_player()
             else:
+                self.check_record()
+                gameDisplay.fill(black)
                 GameProcess.draw_text("Game Over", white, display_width / 2,
                                       display_height / 2, 100)
                 GameProcess.draw_text("Press \"R\" to restart!", white, display_width / 2,
                                       display_height / 2 + 100, 50)
                 self.live = -1
-
             # Draw score
             GameProcess.draw_text(str(self.score), white, 60, 20, 40, False)
-
             # Draw Lives
             for live_ in range(self.live + 1):
                 Player(75 + live_ * 25, 75).draw_player()
-
             # Update screen
             pygame.display.update()
-
             # Tick fps
             timer.tick(30)
-
 
 # Start game
 GameProcess().game_loop()

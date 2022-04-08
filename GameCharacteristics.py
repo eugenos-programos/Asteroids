@@ -1,5 +1,5 @@
 import pygame
-from Utility.json_utility import load_sounds, read_default_characteristics
+from Utility.json_utility import load_sounds, read_default_characteristics, read_records, save_records
 
 characteristics = read_default_characteristics()
 display_width = characteristics["display_width"]
@@ -7,6 +7,7 @@ display_height = characteristics["display_height"]
 white = characteristics["white"]
 yellow = characteristics["yellow"]
 black = characteristics["black"]
+green = characteristics["green"]
 player_size = characteristics["player_size"]
 fd_fric = characteristics["fd_fric"]
 bd_fric = characteristics["bd_fric"]

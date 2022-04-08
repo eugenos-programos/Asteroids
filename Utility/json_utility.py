@@ -14,6 +14,7 @@ def write_default_characteristics(path="../json/characteristics.json"):
         "white": (255, 255, 255),
         "yellow": (255, 255, 0),
         "black": (0, 0, 0),
+        "green": (0, 255, 0),
         "player_size": 10,
         "fd_fric": 0.5,
         "bd_fric": 0.1,
@@ -58,6 +59,25 @@ def load_sounds():
     sounds["snd_saucerB"] = pygame.mixer.Sound(add_path + "saucerBig.wav")
     sounds["snd_saucerS"] = pygame.mixer.Sound(add_path + "saucerSmall.wav")
     return sounds
+
+
+def save_records(records, path="./json/records.json"):
+    """
+    Save records to the JSON file
+    :return: None
+    """
+    with open(path, "w") as outfile:
+        json.dump(records, outfile)
+
+
+def read_records(path="./json/records.json"):
+    """
+    Load game records
+    :return: records represented by dict
+    """
+    with open(path, "r") as readfile:
+        records = json.load(readfile)
+    return records
 
 
 if __name__ == "__main__":
