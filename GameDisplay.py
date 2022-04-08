@@ -5,7 +5,6 @@ display_width = 1920
 display_height = 1080
 white = (255, 255, 255)
 yellow = (255, 255, 0)
-red = (255, 0, 0)
 black = (0, 0, 0)
 player_size = 10
 fd_fric = 0.5

@@ -5,16 +5,16 @@ from Bullet import Bullet
 
 
 class Asteroid:
-    def __init__(self, x, y, t):
+    def __init__(self, x, y, type):
         self.x = x
         self.y = y
-        if t == "Large":
+        if type == "Large":
             self.size = 30
-        elif t == "Normal":
+        elif type == "Normal":
             self.size = 20
         else:
             self.size = 10
-        self.t = t
+        self.type = type
 
         # Make random speed and direction
         self.speed = random.uniform(1, (40 - self.size) * 4 / 15)
