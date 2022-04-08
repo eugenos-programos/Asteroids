@@ -1,5 +1,5 @@
 import random
-from GameDisplay import *
+from GameCharacteristics import *
 import math
 
 

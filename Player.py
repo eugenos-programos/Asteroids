@@ -1,5 +1,5 @@
 import math
-from GameDisplay import *
+from GameCharacteristics import *
 
 
 class Player:

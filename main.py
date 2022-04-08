@@ -1,6 +1,6 @@
 import math
 import sys
-from GameDisplay import *
+from GameCharacteristics import *
 import random
 from DeadPlayer import DeadPlayer
 from Asteroids import Asteroid
@@ -34,6 +34,7 @@ class GameProcess:
         self.intensity = 0
         self.player = Player(display_width / 2, display_height / 2)
         self.saucer = Saucer()
+        self.sounds = load_sounds()
 
     @staticmethod
     def draw_text(msg, color, x, y, s, center=True, font="Calibri"):
@@ -80,7 +81,6 @@ class GameProcess:
 
     def game_loop(self, display_state="Menu"):
         self.__init__(display_state)
-        # Main loop
         while self.game_state != "Exit":
             self.display_menu()
             # User inputs
@@ -97,7 +97,7 @@ class GameProcess:
                     if event.key == pygame.K_SPACE and self.player_dying_delay == 0 and len(self.bullets) < self.bullet_capacity:
                         self.bullets.append(Bullet(self.player.x, self.player.y, self.player.dir))
                     # Play SFX
-                        pygame.mixer.Sound.play(snd_fire)
+                        pygame.mixer.Sound.play(self.sounds["snd_fire"])
                     if self.game_state == "Game Over":
                         if event.key == pygame.K_r:
                             self.game_state = "Exit"
@@ -164,17 +164,17 @@ class GameProcess:
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                             self.score += 20
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangL)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                         elif asteroid.type == "Normal":
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             self.score += 50
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangM)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
                         else:
                             self.score += 100
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangS)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
                         self.asteroids.remove(asteroid)
 
             # Update ship fragments
@@ -234,15 +234,15 @@ class GameProcess:
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangL)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                         elif asteroid.type == "Normal":
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangM)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
                         else:
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangS)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
                         self.asteroids.remove(asteroid)
 
                 # Check for collision w/ bullet
@@ -258,7 +258,7 @@ class GameProcess:
                         self.saucer.state = "Dead"
 
                         # Play SFX
-                        pygame.mixer.Sound.play(snd_bangL)
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
 
                         # Remove bullet
                         self.bullets.remove(bullet)
@@ -291,7 +291,7 @@ class GameProcess:
                             self.game_state = "Game Over"
 
                         # Play SFX
-                        pygame.mixer.Sound.play(snd_bangL)
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
 
                 # Saucer's bullets
                 for bullet in self.saucer.bullets:
@@ -306,15 +306,15 @@ class GameProcess:
                                 self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                                 self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                                 # Play SFX
-                                pygame.mixer.Sound.play(snd_bangL)
+                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                             elif asteroid.type == "Normal":
                                 self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                                 self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                                 # Play SFX
-                                pygame.mixer.Sound.play(snd_bangL)
+                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                             else:
                             # Play SFX
-                                pygame.mixer.Sound.play(snd_bangL)
+                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
 
                             # Remove asteroid and bullet
                             self.asteroids.remove(asteroid)
@@ -348,7 +348,7 @@ class GameProcess:
                             else:
                                 self.game_state = "Game Over"
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangL)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                             # Remove bullet
                             self.saucer.bullets.remove(bullet)
 
@@ -372,17 +372,17 @@ class GameProcess:
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
                             self.score += 20
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangL)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
                         elif asteroid.type == "Normal":
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
                             self.score += 50
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangM)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
                         else:
                             self.score += 100
                             # Play SFX
-                            pygame.mixer.Sound.play(snd_bangS)
+                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
                         self.asteroids.remove(asteroid)
                         self.bullets.remove(bullet)
 
@@ -403,7 +403,7 @@ class GameProcess:
             # Play sfx
             if self.play_one_up_sfx > 0:
                 self.play_one_up_sfx -= 1
-                pygame.mixer.Sound.play(snd_extra, 60)
+                pygame.mixer.Sound.play(self.sounds["snd_extra"], 60)
 
         # Draw player
             if self.game_state != "Game Over":

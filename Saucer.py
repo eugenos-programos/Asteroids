@@ -1,4 +1,4 @@
-from GameDisplay import *
+from GameCharacteristics import *
 import math
 import random
 from Bullet import Bullet
@@ -17,6 +17,9 @@ class Saucer:
         self.cd = 0
         self.bdir = 0
         self.soundDelay = 0
+        sounds = load_sounds()
+        self.snd_saucerB = sounds["snd_saucerB"]
+        self.snd_saucerS = sounds["snd_saucerS"]
 
     def update_saucer(self):
         # Move player
@@ -46,9 +49,9 @@ class Saucer:
 
         # Play SFX
         if self.type == "Large":
-            pygame.mixer.Sound.play(snd_saucerB)
+            pygame.mixer.Sound.play(self.snd_saucerB)
         else:
-            pygame.mixer.Sound.play(snd_saucerS)
+            pygame.mixer.Sound.play(self.snd_saucerS)
 
     def create_saucer(self):
         # Create saucer

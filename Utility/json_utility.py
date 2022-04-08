@@ -27,7 +27,7 @@ def write_default_characteristics(path="../json/characteristics.json"):
         json.dump(default_characteristics, outfile)
 
 
-def read_default_characteristics(path="../json/characteristics.json"):
+def read_default_characteristics(path="./json/characteristics.json"):
     """
     Read characteristics from JSON file
     :param path: path to the file for reading
@@ -61,4 +61,4 @@ def load_sounds():
 
 
 if __name__ == "__main__":
-    print(load_sounds())
+    write_default_characteristics()

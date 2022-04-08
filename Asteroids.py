@@ -1,6 +1,6 @@
 import math
 import random
-from GameDisplay import *
+from GameCharacteristics import *
 from Bullet import Bullet
 
 
