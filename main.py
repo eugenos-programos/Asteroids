@@ -1,4 +1,7 @@
 import math
+
+import pygame
+
 from GameDisplay import *
 import random
 from DeadPlayer import DeadPlayer
@@ -12,13 +15,6 @@ pygame.display.set_caption("Asteroids")
 timer = pygame.time.Clock()
 
 # Import sound effects
-snd_fire = pygame.mixer.Sound("Sounds/fire.wav")
-snd_bangL = pygame.mixer.Sound("Sounds/bangLarge.wav")
-snd_bangM = pygame.mixer.Sound("Sounds/bangMedium.wav")
-snd_bangS = pygame.mixer.Sound("Sounds/bangSmall.wav")
-snd_extra = pygame.mixer.Sound("Sounds/extra.wav")
-snd_saucerB = pygame.mixer.Sound("Sounds/saucerBig.wav")
-snd_saucerS = pygame.mixer.Sound("Sounds/saucerSmall.wav")
 
 
 # Create function to draw texts
@@ -32,11 +28,11 @@ def draw_text(msg, color, x, y, s, center=True):
     gameDisplay.blit(screen_text, rect)
 
 
-# Create funtion to chek for collision
-def is_colliding(x, y, xTo, yTo, size):
-    if x > xTo - size and x < xTo + size and y > yTo - size and y < yTo + size:
-        return True
-    return False
+def is_colliding(x, y, x_to, y_to, size):
+    is_colliding_var = False
+    if x_to - size < x < x_to + size and y_to - size < y < y_to + size:
+        is_colliding_var = True
+    return is_colliding_var
 
 
 def game_loop(startingState):
@@ -66,8 +62,13 @@ def game_loop(startingState):
         # Game menu
         while game_state == "Menu":
             gameDisplay.fill(black)
-            draw_text("ASTEROIDS", white, display_width / 2, display_height / 2, 100)
-            draw_text("Press any key to START", white, display_width / 2, display_height / 2 + 100, 50)
+            x = display_width / 2
+            y = display_height / 4
+            draw_text("ASTEROIDS", yellow, x, y, 100)
+            draw_text("Press SPACE to START", white, x, y + 150, 50)
+            draw_text("Press SHIFT to see records", white, x, y + 250, 50)
+            draw_text("Press TAB to see game rules", white, x, y + 350, 50)
+            draw_text("Press ESC to EXIT", white, x, y + 450, 50)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_state = "Exit"
@@ -84,9 +85,9 @@ def game_loop(startingState):
                 if event.key == pygame.K_UP:
                     player.thrust = True
                 if event.key == pygame.K_LEFT:
-                    player.rtspd = -player_max_rtspd
+                    player.rotate_speed = -player_max_rotate_speed
                 if event.key == pygame.K_RIGHT:
-                    player.rtspd = player_max_rtspd
+                    player.rotate_speed = player_max_rotate_speed
                 if event.key == pygame.K_SPACE and player_dying_delay == 0 and len(bullets) < bullet_capacity:
                     bullets.append(Bullet(player.x, player.y, player.dir))
                     # Play SFX
@@ -101,7 +102,7 @@ def game_loop(startingState):
                 if event.key == pygame.K_UP:
                     player.thrust = False
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                    player.rtspd = 0
+                    player.rotate_speed = 0
 
         # Update player
         player.update_player()
@@ -129,8 +130,10 @@ def game_loop(startingState):
             if player_state != "Died":
                 if is_colliding(player.x, player.y, a.x, a.y, a.size):
                     # Create ship fragments
-                    player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
-                    player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    player_pieces.append(
+                        DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    player_pieces.append(
+                        DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
                     player_pieces.append(DeadPlayer(player.x, player.y, player_size))
 
                     # Kill player
@@ -178,12 +181,12 @@ def game_loop(startingState):
                 intensity = 0
                 # Spawn asteroid away of center
                 for i in range(stage):
-                    xTo = display_width / 2
-                    yTo = display_height / 2
-                    while xTo - display_width / 2 < display_width / 4 and yTo - display_height / 2 < display_height / 4:
-                        xTo = random.randrange(0, display_width)
-                        yTo = random.randrange(0, display_height)
-                    asteroids.append(Asteroid(xTo, yTo, "Large"))
+                    x_to = display_width / 2
+                    y_to = display_height / 2
+                    while x_to - display_width / 2 < display_width / 4 and y_to - display_height / 2 < display_height / 4:
+                        x_to = random.randrange(0, display_width)
+                        y_to = random.randrange(0, display_height)
+                    asteroids.append(Asteroid(x_to, y_to, "Large"))
                 next_level_delay = 0
 
         # Update intensity
@@ -200,7 +203,8 @@ def game_loop(startingState):
         else:
             # Set saucer targer dir
             acc = small_saucer_accuracy * 4 / stage
-            saucer.bdir = math.degrees(math.atan2(-saucer.y + player.y, -saucer.x + player.x) + math.radians(random.uniform(acc, -acc)))
+            saucer.bdir = math.degrees(
+                math.atan2(-saucer.y + player.y, -saucer.x + player.x) + math.radians(random.uniform(acc, -acc)))
 
             saucer.update_saucer()
             saucer.draw_saucer()
@@ -249,8 +253,10 @@ def game_loop(startingState):
             if is_colliding(saucer.x, saucer.y, player.x, player.y, saucer.size):
                 if player_state != "Died":
                     # Create ship fragments
-                    player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
-                    player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    player_pieces.append(
+                        DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    player_pieces.append(
+                        DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
                     player_pieces.append(DeadPlayer(player.x, player.y, player_size))
 
                     # Kill player
@@ -300,8 +306,10 @@ def game_loop(startingState):
                 if is_colliding(player.x, player.y, b.x, b.y, 5):
                     if player_state != "Died":
                         # Create ship fragments
-                        player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
-                        player_pieces.append(DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                        player_pieces.append(
+                            DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                        player_pieces.append(
+                            DeadPlayer(player.x, player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
                         player_pieces.append(DeadPlayer(player.x, player.y, player_size))
 
                         # Kill player
@@ -334,7 +342,7 @@ def game_loop(startingState):
 
             # Check for bullets collide w/ asteroid
             for a in asteroids:
-                if b.x > a.x - a.size and b.x < a.x + a.size and b.y > a.y - a.size and b.y < a.y + a.size:
+                if a.x - a.size < b.x < a.x + a.size and a.y - a.size < b.y < a.y + a.size:
                     # Split asteroid
                     if a.t == "Large":
                         asteroids.append(Asteroid(a.x, a.y, "Normal"))

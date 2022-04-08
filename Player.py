@@ -13,7 +13,7 @@ class Player:
         self.hspeed = 0
         self.vspeed = 0
         self.dir = -90
-        self.rtspd = 0
+        self.rotate_speed = 0
         self.thrust = False
 
     def update_player(self):
@@ -57,7 +57,7 @@ class Player:
             self.y = display_height
 
         # Rotate player
-        self.dir += self.rtspd
+        self.dir += self.rotate_speed
 
     def draw_player(self):
         a = math.radians(self.dir)
