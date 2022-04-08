@@ -227,9 +227,10 @@ class GameProcess:
                     # Play SFX
                         pygame.mixer.Sound.play(self.sounds["snd_fire"])
                     if self.game_state == "Game Over":
-                        if event.key == pygame.K_r:
-                            self.game_state = "Exit"
-                            self.game_loop("Playing")
+                        print("DF")
+                        if event.key == pygame.K_F1:
+                            print("ddf")
+                            self.game_loop()
                     if event.key == pygame.K_LSHIFT:
                         self.hyperspace = 30
                 if event.type == pygame.KEYUP:
@@ -550,14 +551,22 @@ class GameProcess:
                     self.player.draw_player()
             else:
                 self.check_record()
-                gameDisplay.fill(black)
                 GameProcess.draw_text("Game Over", white, display_width / 2,
                                       display_height / 2, 100)
-                GameProcess.draw_text("Press \"R\" to restart!", white, display_width / 2,
+                GameProcess.draw_text("Press \"F1\" to go to the menu!", white, display_width / 2,
                                       display_height / 2 + 100, 50)
                 self.live = -1
             # Draw score
-            GameProcess.draw_text(str(self.score), white, 60, 20, 40, False)
+            GameProcess.draw_text(str(self.score), white, 100, 50, 40, False)
+            if self.game_state == "Game Over":
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_F1:
+                            gameDisplay.fill(black)
+                            self.game_loop()
+                        if event.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            sys.exit()
             # Draw Lives
             for live_ in range(self.live + 1):
                 Player(75 + live_ * 25, 75).draw_player()
@@ -566,9 +575,7 @@ class GameProcess:
             # Tick fps
             timer.tick(30)
 
-# Start game
-GameProcess().game_loop()
 
-# End game
+GameProcess().game_loop()
 pygame.quit()
 quit()
