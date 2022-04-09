@@ -28,17 +28,18 @@ def write_default_characteristics(path="../json/characteristics.json"):
         json.dump(default_characteristics, outfile)
 
 
-def read_default_characteristics(path="./json/characteristics.json"):
+def read_default_characteristics(path_1="./json/characteristics.json", path_2="./json/colors.json"):
     """
     Read characteristics from JSON file
-    :param path: path to the file for reading
     :return: None
     """
-    with open(path, 'r') as readfile:
+    with open(path_1, 'r') as readfile:
         characteristics = json.load(readfile)
     transform_to_tuple = ["white", "yellow", "black"]
-    for color in transform_to_tuple:
-        characteristics[color] = tuple(characteristics[color])
+    with open(path_2, 'r') as readfile:
+        colors = json.load(readfile)
+    for color in colors.keys():
+        characteristics[color] = tuple(colors[color])
     return characteristics
 
 
@@ -58,6 +59,7 @@ def load_sounds():
     sounds["snd_extra"] = pygame.mixer.Sound(add_path + "extra.wav")
     sounds["snd_saucerB"] = pygame.mixer.Sound(add_path + "saucerBig.wav")
     sounds["snd_saucerS"] = pygame.mixer.Sound(add_path + "saucerSmall.wav")
+    sounds["background"] = pygame.mixer.Sound(add_path + "background.mp3")
     return sounds
 
 

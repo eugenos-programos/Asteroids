@@ -2,6 +2,16 @@ import pygame
 from Utility.json_utility import load_sounds, read_default_characteristics, read_records, save_records
 
 characteristics = read_default_characteristics()
+
+
+def check_characteristics():
+    for key in characteristics.keys():
+        if isinstance(characteristics[key], int) or isinstance(characteristics[key], float):
+            if characteristics[key] < 0:
+                characteristics[key] = abs(characteristics[key])
+
+
+check_characteristics()
 display_width = characteristics["display_width"]
 display_height = characteristics["display_height"]
 white = characteristics["white"]
@@ -16,5 +26,7 @@ player_max_rotate_speed = characteristics["player_max_rotate_speed"]
 bullet_speed = characteristics["bullet_speed"]
 saucer_speed = characteristics["saucer_speed"]
 small_saucer_accuracy = characteristics["small_saucer_accuracy"]
+
+
 
 gameDisplay = pygame.display.set_mode((display_width, display_height))

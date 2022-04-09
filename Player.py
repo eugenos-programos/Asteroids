@@ -59,11 +59,14 @@ class Player:
         # Rotate player
         self.dir += self.rotate_speed
 
-    def draw_player(self):
+    def draw_player(self, for_lives=False):
         a = math.radians(self.dir)
         x = self.x
         y = self.y
-        s = player_size
+        if for_lives:
+            s = 10
+        else:
+            s = player_size
         t = self.thrust
         # Draw player
         pygame.draw.line(gameDisplay, white,

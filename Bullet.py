@@ -8,16 +8,14 @@ class Bullet:
         self.y = y
         self.dir = direction
         self.life = 30
-        self.bullet_speed = 15
+        self.bullet_speed = 20
 
     def update_bullet(self):
         # Moving
         self.x += self.bullet_speed * math.cos(self.dir * math.pi / 180)
         self.y += self.bullet_speed * math.sin(self.dir * math.pi / 180)
-
         # Drawing
         pygame.draw.circle(gameDisplay, white, (int(self.x), int(self.y)), 3)
-
         # Wrapping
         if self.x > display_width:
             self.x = 0

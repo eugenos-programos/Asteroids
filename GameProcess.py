@@ -1,8 +1,7 @@
 import math
 import sys
-
 import pygame.event
-
+import GameCharacteristics
 from GameCharacteristics import *
 import random
 from DeadPlayer import DeadPlayer
@@ -219,6 +218,294 @@ class GameProcess:
         pygame.quit()
         sys.exit()
 
+    def check_collision_asteroid(self):
+        for asteroid in self.asteroids:
+            asteroid.update_asteroid()
+            if self.player_state != "Died":
+                if GameProcess.is_colliding(self.player.x, self.player.y, asteroid.x, asteroid.y, asteroid.size):
+                    # Create ship fragments
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, player_size))
+
+                    # Kill player
+                    self.player_state = "Died"
+                    self.player_dying_delay = 30
+                    self.player_invi_dur = 120
+                    self.player.kill_player()
+
+                    if self.live != 0:
+                        self.live -= 1
+                    else:
+                        self.game_state = "Game Over"
+
+                        # Split asteroid
+                    if asteroid.type == "Large":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        self.score += 20
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                    elif asteroid.type == "Normal":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        self.score += 50
+                        pygame.mixer.Sound.play(self.sounds["snd_bangM"])
+                    else:
+                        self.score += 100
+                        # Play SFX
+                        pygame.mixer.Sound.play(self.sounds["snd_bangS"])
+                    self.asteroids.remove(asteroid)
+
+    def update_ship_fragments(self):
+        for player_piece in self.player_pieces:
+            player_piece.update_dead_player()
+            if player_piece.x > display_width or player_piece.x < 0 or player_piece.y > display_height or player_piece.y < 0:
+                self.player_pieces.remove(player_piece)
+
+    def check_end_of_the_stage(self):
+        if len(self.asteroids) == 0 and self.saucer.state == "Dead":
+            if self.next_level_delay < 30:
+                self.next_level_delay += 1
+            else:
+                self.stage += 1
+                self.intensity = 0
+                # Spawn asteroid away of center
+                for stage_index in range(self.stage):
+                    x_to = display_width / 2
+                    y_to = display_height / 2
+                    while x_to - display_width / 2 < display_width / 4 and y_to - display_height / 2 < display_height / 4:
+                        x_to = random.randrange(0, display_width)
+                        y_to = random.randrange(0, display_height)
+                    self.asteroids.append(Asteroid(x_to, y_to, "Large"))
+                self.next_level_delay = 0
+
+    def check_collision_asteroid_saucer(self):
+        for asteroid in self.asteroids:
+            if GameProcess.is_colliding(self.saucer.x, self.saucer.y, asteroid.x, asteroid.y,
+                                        asteroid.size + self.saucer.size):
+                # Set saucer state
+                self.saucer.state = "Dead"
+
+                if asteroid.type == "Large":
+                    self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                    self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                    pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                elif asteroid.type == "Normal":
+                    self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                    self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                    pygame.mixer.Sound.play(self.sounds["snd_bangM"])
+                else:
+                    pygame.mixer.Sound.play(self.sounds["snd_bangS"])
+                self.asteroids.remove(asteroid)
+
+    def check_collision_player_saucer(self):
+        if GameProcess.is_colliding(self.saucer.x, self.saucer.y, self.player.x, self.player.y,
+                                    self.saucer.size):
+            if self.player_state != "Died":
+                # Create ship fragments
+                self.player_pieces.append(
+                    DeadPlayer(
+                        self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                self.player_pieces.append(
+                    DeadPlayer(self.player.x, self.player.y, player_size))
+
+                # Kill player
+                self.player_state = "Died"
+                self.player_dying_delay = 30
+                self.player_invi_dur = 120
+                self.player.kill_player()
+                if self.live != 0:
+                    self.live -= 1
+                else:
+                    self.game_state = "Game Over"
+                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+
+    def check_saucer_bullets(self):
+        for bullet in self.saucer.bullets:
+            bullet.update_bullet()
+
+            # Check for collision w/ asteroids
+            for asteroid in self.asteroids:
+                if GameProcess.is_colliding(bullet.x, bullet.y, asteroid.x, asteroid.y, asteroid.size):
+                    # Split asteroid
+                    if asteroid.type == "Large":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                    elif asteroid.type == "Normal":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                    else:
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+
+                    # Remove asteroid and bullet
+                    self.asteroids.remove(asteroid)
+                    self.saucer.bullets.remove(bullet)
+
+                    break
+
+            # Check for collision w/ player
+            if GameProcess.is_colliding(self.player.x, self.player.y, bullet.x, bullet.y, 15):
+                if self.player_state != "Died":
+                    # Create ship fragments
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, 5 * player_size / (2 * math.cos(math.atan(1 / 3)))))
+                    self.player_pieces.append(DeadPlayer(self.player.x, self.player.y, player_size))
+
+                    # Kill player
+                    self.player_state = "Died"
+                    self.player_dying_delay = 30
+                    self.player_invi_dur = 120
+                    self.player.kill_player()
+
+                    if self.live != 0:
+                        self.live -= 1
+                    else:
+                        self.game_state = "Game Over"
+                    # Play SFX
+                    pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                    # Remove bullet
+                    self.saucer.bullets.remove(bullet)
+
+            if bullet.life <= 0:
+                try:
+                    self.saucer.bullets.remove(bullet)
+                except ValueError:
+                    continue
+
+    def check_collision_bullet_saucer(self):
+        for bullet in self.bullets:
+            if GameProcess.is_colliding(bullet.x, bullet.y, self.saucer.x, self.saucer.y, self.saucer.size):
+                if self.saucer.type == "Large":
+                    self.score += 200
+                else:
+                    self.score += 1000
+                self.saucer.state = "Dead"
+                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                self.bullets.remove(bullet)
+
+        # Check collision w/ player
+        self.check_collision_player_saucer()
+        # Saucer's bullets
+        self.check_saucer_bullets()
+
+    def saucer_update(self):
+        if self.saucer.state == "Dead":
+            if random.randint(0, 6000) <= (self.intensity * 2) / (self.stage * 9) and self.next_level_delay == 0:
+                self.saucer.create_saucer()
+                # Only small saucers >400
+                if self.score >= 400:
+                    self.saucer.type = "Small"
+        else:
+            # Set saucer targer dir
+            acc = small_saucer_accuracy * 4 / self.stage
+            self.saucer.bdir = math.degrees(
+                math.atan2(-self.saucer.y + self.player.y, -self.saucer.x + self.player.x) +
+                math.radians(random.uniform(acc, -acc)))
+
+            self.saucer.update_saucer()
+            self.saucer.draw_saucer()
+
+            # Check for collision w/ asteroid
+            self.check_collision_asteroid_saucer()
+            # Check for collision w/ bullet
+            self.check_collision_bullet_saucer()
+
+    def update_bullets(self):
+        for bullet in self.bullets:
+            bullet.update_bullet()
+            # Check for bullets collide w/ asteroid
+            for asteroid in self.asteroids:
+                if asteroid.x - asteroid.size < bullet.x < asteroid.x + asteroid.size and asteroid.y - asteroid.size < bullet.y < asteroid.y + asteroid.size:
+                    # Split asteroid
+                    if asteroid.type == "Large":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
+                        self.score += 20
+                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
+                    elif asteroid.type == "Normal":
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
+                        self.score += 50
+                        pygame.mixer.Sound.play(self.sounds["snd_bangM"])
+                    else:
+                        self.score += 100
+                        pygame.mixer.Sound.play(self.sounds["snd_bangS"])
+                    self.asteroids.remove(asteroid)
+                    self.bullets.remove(bullet)
+                    break
+            # Destroying bullets
+            if bullet.life <= 0:
+                try:
+                    self.bullets.remove(bullet)
+                except ValueError:
+                    continue
+
+    def draw_score(self):
+        GameProcess.draw_text(str(self.score), white, 100, 20, 40, False)
+        if self.game_state == "Game Over":
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F1:
+                        gameDisplay.fill(black)
+                        self.game_loop()
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+
+    def draw_lives(self):
+        for live_ in range(self.live + 1):
+            print(self.live)
+            Player(75 + live_ * 25, 75).draw_player(for_lives=True)
+
+    def draw_player(self):
+        if self.game_state != "Game Over":
+            if self.player_state == "Died":
+                if self.hyperspace == 0:
+                    if self.player_dying_delay == 0:
+                        if self.player_blink < 5:
+                            if self.player_blink == 0:
+                                self.player_blink = 10
+                            else:
+                                self.player.draw_player()
+                        self.player_blink -= 1
+                    else:
+                        self.player_dying_delay -= 1
+            else:
+                self.player.draw_player()
+        else:
+            self.check_record()
+            GameProcess.draw_text("Game Over", white, display_width / 2,
+                                  display_height / 2, 100)
+            GameProcess.draw_text("Press \"F1\" to go to the menu!", white, display_width / 2,
+                                  display_height / 2 + 100, 50)
+            self.live = -1
+
+    def check_player_invincible_time(self):
+        if self.player_invi_dur != 0:
+            self.player_invi_dur -= 1
+        elif self.hyperspace == 0:
+            self.player_state = "Alive"
+
+    def update_hyperspace(self):
+        if self.hyperspace != 0:
+            self.player_state = "Died"
+            self.hyperspace -= 1
+            if self.hyperspace == 1:
+                self.player.x = random.randrange(0, display_width)
+                self.player.y = random.randrange(0, display_height)
+
+    def extra_live(self):
+        if self.score > self.one_up_multiplier * 10000:
+            self.one_up_multiplier += 1
+            self.live += 1
+            self.play_one_up_sfx = 60
+        if self.play_one_up_sfx > 0:
+            self.play_one_up_sfx -= 1
+            pygame.mixer.Sound.play(self.sounds["snd_extra"], 60)
+
     def game_loop(self, display_state="Menu"):
         self.__init__(display_state)
         pygame.mixer.music.load("./Sounds/background.mp3")
@@ -234,6 +521,9 @@ class GameProcess:
                         self.player.thrust = True
                     if event.key == pygame.K_LEFT:
                         self.player.rotate_speed = -1 * player_max_rotate_speed
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
                     if event.key == pygame.K_RIGHT:
                         self.player.rotate_speed = player_max_rotate_speed
                     if event.key == pygame.K_SPACE and self.player_dying_delay == 0 and len(
@@ -249,339 +539,24 @@ class GameProcess:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                         self.player.rotate_speed = 0
 
-            # Update player
             self.player.update_player()
-
-            # Checking player invincible time
-            if self.player_invi_dur != 0:
-                self.player_invi_dur -= 1
-            elif self.hyperspace == 0:
-                self.player_state = "Alive"
-
-            # Reset display
+            self.check_player_invincible_time()
             gameDisplay.fill(black)
+            self.update_hyperspace()
 
-            # Hyperspace
-            if self.hyperspace != 0:
-                self.player_state = "Died"
-                self.hyperspace -= 1
-                if self.hyperspace == 1:
-                    self.player.x = random.randrange(0, display_width)
-                    self.player.y = random.randrange(0, display_height)
-
-            # Check for collision w/ asteroid
-            for asteroid in self.asteroids:
-                asteroid.update_asteroid()
-                if self.player_state != "Died":
-                    if GameProcess.is_colliding(self.player.x, self.player.y, asteroid.x, asteroid.y, asteroid.size):
-                        # Create ship fragments
-                        self.player_pieces.append(
-                            DeadPlayer(
-                                self.player.x, self.player.y, 5 * player_size /
-                                                              (2 * math.cos(math.atan(1 / 3)))))
-                        self.player_pieces.append(
-                            DeadPlayer(
-                                self.player.x, self.player.y, 5 * player_size /
-                                                              (2 * math.cos(math.atan(1 / 3)))))
-                        self.player_pieces.append(
-                            DeadPlayer(self.player.x, self.player.y, player_size))
-
-                        # Kill player
-                        self.player_state = "Died"
-                        self.player_dying_delay = 30
-                        self.player_invi_dur = 120
-                        self.player.kill_player()
-
-                        if self.live != 0:
-                            self.live -= 1
-                        else:
-                            self.game_state = "Game Over"
-
-                        # Split asteroid
-                        if asteroid.type == "Large":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            self.score += 20
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                        elif asteroid.type == "Normal":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            self.score += 50
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
-                        else:
-                            self.score += 100
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
-                        self.asteroids.remove(asteroid)
-
-            # Update ship fragments
-            for player_piece in self.player_pieces:
-                player_piece.update_dead_player()
-                if player_piece.x > display_width or player_piece.x < 0 or player_piece.y > display_height or player_piece.y < 0:
-                    self.player_pieces.remove(player_piece)
-
-            # Check for end of stage
-            if len(self.asteroids) == 0 and self.saucer.state == "Dead":
-                if self.next_level_delay < 30:
-                    self.next_level_delay += 1
-                else:
-                    self.stage += 1
-                    self.intensity = 0
-                    # Spawn asteroid away of center
-                    for stage_index in range(self.stage):
-                        x_to = display_width / 2
-                        y_to = display_height / 2
-                        while x_to - display_width / 2 < display_width / 4 and y_to - display_height / 2 < display_height / 4:
-                            x_to = random.randrange(0, display_width)
-                            y_to = random.randrange(0, display_height)
-                        self.asteroids.append(Asteroid(x_to, y_to, "Large"))
-                    self.next_level_delay = 0
-
+            # collisions
+            self.check_collision_asteroid()
+            self.update_ship_fragments()
+            self.check_end_of_the_stage()
             # Update intensity
             if self.intensity < self.stage * 450:
                 self.intensity += 1
 
-            # Saucer
-            if self.saucer.state == "Dead":
-                if random.randint(0, 6000) <= (self.intensity * 2) / (
-                        self.stage * 9) and self.next_level_delay == 0:
-                    self.saucer.create_saucer()
-                    # Only small saucers >40000
-                    if self.score >= 400:
-                        self.saucer.type = "Small"
-            else:
-                # Set saucer targer dir
-                acc = small_saucer_accuracy * 4 / self.stage
-                self.saucer.bdir = math.degrees(
-                    math.atan2(-self.saucer.y + self.player.y, -self.saucer.x + self.player.x) +
-                    math.radians(random.uniform(acc, -acc)))
-
-                self.saucer.update_saucer()
-                self.saucer.draw_saucer()
-
-                # Check for collision w/ asteroid
-                for asteroid in self.asteroids:
-                    if GameProcess.is_colliding(self.saucer.x, self.saucer.y, asteroid.x, asteroid.y,
-                                                asteroid.size + self.saucer.size):
-                        # Set saucer state
-                        self.saucer.state = "Dead"
-
-                        # Split asteroid
-                        if asteroid.type == "Large":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                        elif asteroid.type == "Normal":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
-                        else:
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
-                        self.asteroids.remove(asteroid)
-
-                # Check for collision w/ bullet
-                for bullet in self.bullets:
-                    if GameProcess.is_colliding(bullet.x, bullet.y, self.saucer.x, self.saucer.y, self.saucer.size):
-                        # Add points
-                        if self.saucer.type == "Large":
-                            self.score += 200
-                        else:
-                            self.score += 1000
-
-                        # Set saucer state
-                        self.saucer.state = "Dead"
-
-                        # Play SFX
-                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-
-                        # Remove bullet
-                        self.bullets.remove(bullet)
-
-                # Check collision w/ player
-                if GameProcess.is_colliding(self.saucer.x, self.saucer.y, self.player.x, self.player.y,
-                                            self.saucer.size):
-                    if self.player_state != "Died":
-                        # Create ship fragments
-                        self.player_pieces.append(
-                            DeadPlayer(
-                                self.player.x, self.player.y, 5 * player_size /
-                                                              (2 * math.cos(math.atan(1 / 3)))))
-                        self.player_pieces.append(
-                            DeadPlayer(
-                                self.player.x, self.player.y, 5 * player_size /
-                                                              (2 * math.cos(math.atan(1 / 3)))))
-                        self.player_pieces.append(
-                            DeadPlayer(self.player.x, self.player.y, player_size))
-
-                        # Kill player
-                        self.player_state = "Died"
-                        self.player_dying_delay = 30
-                        self.player_invi_dur = 120
-                        self.player.kill_player()
-
-                        if self.live != 0:
-                            self.live -= 1
-                        else:
-                            self.game_state = "Game Over"
-
-                        # Play SFX
-                        pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-
-                # Saucer's bullets
-                for bullet in self.saucer.bullets:
-                    # Update bullets
-                    bullet.update_bullet()
-
-                    # Check for collision w/ asteroids
-                    for asteroid in self.asteroids:
-                        if GameProcess.is_colliding(bullet.x, bullet.y, asteroid.x, asteroid.y, asteroid.size):
-                            # Split asteroid
-                            if asteroid.type == "Large":
-                                self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                                self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                                # Play SFX
-                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                            elif asteroid.type == "Normal":
-                                self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                                self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                                # Play SFX
-                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                            else:
-                                # Play SFX
-                                pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-
-                            # Remove asteroid and bullet
-                            self.asteroids.remove(asteroid)
-                            self.saucer.bullets.remove(bullet)
-
-                            break
-
-                    # Check for collision w/ player
-                    if GameProcess.is_colliding(self.player.x, self.player.y, bullet.x, bullet.y, 5):
-                        if self.player_state != "Died":
-                            # Create ship fragments
-                            self.player_pieces.append(
-                                DeadPlayer(
-                                    self.player.x, self.player.y, 5 * player_size /
-                                                                  (2 * math.cos(math.atan(1 / 3)))))
-                            self.player_pieces.append(
-                                DeadPlayer(
-                                    self.player.x, self.player.y, 5 * player_size /
-                                                                  (2 * math.cos(math.atan(1 / 3)))))
-                            self.player_pieces.append(
-                                DeadPlayer(self.player.x, self.player.y, player_size))
-
-                            # Kill player
-                            self.player_state = "Died"
-                            self.player_dying_delay = 30
-                            self.player_invi_dur = 120
-                            self.player.kill_player()
-
-                            if self.live != 0:
-                                self.live -= 1
-                            else:
-                                self.game_state = "Game Over"
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                            # Remove bullet
-                            self.saucer.bullets.remove(bullet)
-
-                    if bullet.life <= 0:
-                        try:
-                            self.saucer.bullets.remove(bullet)
-                        except ValueError:
-                            continue
-
-            # Bullets
-            for bullet in self.bullets:
-                # Update bullets
-                bullet.update_bullet()
-
-                # Check for bullets collide w/ asteroid
-                for asteroid in self.asteroids:
-                    if asteroid.x - asteroid.size < bullet.x < asteroid.x + asteroid.size and asteroid.y - asteroid.size < bullet.y < asteroid.y + asteroid.size:
-                        # Split asteroid
-                        if asteroid.type == "Large":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Normal"))
-                            self.score += 20
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangL"])
-                        elif asteroid.type == "Normal":
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            self.asteroids.append(Asteroid(asteroid.x, asteroid.y, "Small"))
-                            self.score += 50
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangM"])
-                        else:
-                            self.score += 100
-                            # Play SFX
-                            pygame.mixer.Sound.play(self.sounds["snd_bangS"])
-                        self.asteroids.remove(asteroid)
-                        self.bullets.remove(bullet)
-
-                        break
-
-                # Destroying bullets
-                if bullet.life <= 0:
-                    try:
-                        self.bullets.remove(bullet)
-                    except ValueError:
-                        continue
-
-            # Extra live
-            if self.score > self.one_up_multiplier * 10000:
-                self.one_up_multiplier += 1
-                self.live += 1
-                self.play_one_up_sfx = 60
-            # Play sfx
-            if self.play_one_up_sfx > 0:
-                self.play_one_up_sfx -= 1
-                pygame.mixer.Sound.play(self.sounds["snd_extra"], 60)
-
-            # Draw player
-            if self.game_state != "Game Over":
-                if self.player_state == "Died":
-                    if self.hyperspace == 0:
-                        if self.player_dying_delay == 0:
-                            if self.player_blink < 5:
-                                if self.player_blink == 0:
-                                    self.player_blink = 10
-                                else:
-                                    self.player.draw_player()
-                            self.player_blink -= 1
-                        else:
-                            self.player_dying_delay -= 1
-                else:
-                    self.player.draw_player()
-            else:
-                self.check_record()
-                GameProcess.draw_text("Game Over", white, display_width / 2,
-                                      display_height / 2, 100)
-                GameProcess.draw_text("Press \"F1\" to go to the menu!", white, display_width / 2,
-                                      display_height / 2 + 100, 50)
-                self.live = -1
-            # Draw score
-            GameProcess.draw_text(str(self.score), white, 100, 50, 40, False)
-            if self.game_state == "Game Over":
-                for event in pygame.event.get():
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_F1:
-                            gameDisplay.fill(black)
-                            self.game_loop()
-                        if event.key == pygame.K_ESCAPE:
-                            pygame.quit()
-                            sys.exit()
-            # Draw Lives
-            for live_ in range(self.live + 1):
-                Player(75 + live_ * 25, 75).draw_player()
-            # Update screen
+            self.saucer_update()
+            self.update_bullets()
+            self.extra_live()
+            self.draw_player()
+            self.draw_score()
+            self.draw_lives()
             pygame.display.update()
-            # Tick fps
             timer.tick(30)
-
